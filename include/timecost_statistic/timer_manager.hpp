@@ -81,8 +81,8 @@ class TimerManager{
       }
     }
 
-    records.push_back(new std::chrono::milliseconds(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
+    records.push_back(new DurationT(
+        std::chrono::duration_cast<DurationT>(
             ending - timer->second.beginning)));
 
     return true;
@@ -136,7 +136,7 @@ class TimerManager{
     bool ticking{false};
     bool enable{false};
     TimePointT beginning;
-    std::vector<std::chrono::milliseconds*> records;
+    std::vector<DurationT*> records;
   };
 
   std::map<std::string, Timer> timers_;
