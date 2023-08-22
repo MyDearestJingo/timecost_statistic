@@ -26,7 +26,9 @@ class TimerManager{
  public:
   TimerManager()
     : log_info_(std::cout), log_warn_(std::cout), log_err_(std::cerr)
-  {};
+  {
+    log_info_.precision(6);
+  };
 
   // ~TimerManager();
 
