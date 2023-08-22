@@ -22,6 +22,7 @@ using DurationT = std::chrono::microseconds;
  * @todo offer interface for setting log message stream
  * @todo change to a template class for specifying duration type
  * @todo use a stack to organize the waking up order of timers
+ * @todo add singleton mode
  */
 class TimerManager{
  public:
@@ -33,17 +34,24 @@ class TimerManager{
 
   // ~TimerManager();
 
+  /**
+   *
+  */
   inline bool registerTimer(const std::string &id) {
     timers_.insert(std::pair<std::string, Timer>(id,{}));
     log_info_ << "Registered timer \""<< id << "\" " << std::endl;
     return true;
   }
 
+  /**
+   * @brief
+  */
   inline bool startTimer(
       const std::string& id,
       const TimePointT* beginning=nullptr,
       bool create_if_not_existed=true)
   {
+#ifndef DISABLE_ALL_TIMERS
     auto timer = timers_.find(id);
     if(timer == timers_.end() && create_if_not_existed) {
       registerTimer(id);
@@ -56,6 +64,7 @@ class TimerManager{
     timer->second.ticking = true;
     timer->second.beginning =
         beginning ? *beginning : std::chrono::high_resolution_clock::now();
+#endif
 
     return true;
   }
@@ -64,6 +73,7 @@ class TimerManager{
       const std::string& id,
       const TimePointT ending=std::chrono::high_resolution_clock::now())
   {
+#ifndef DISABLE_ALL_TIMERS
     auto timer = timers_.find(id);
     if(timer == timers_.end()) {
       log_err_ << "Timer with ID \"" << id << "\" does not exist" << std::endl;
@@ -87,7 +97,7 @@ class TimerManager{
     records.push_back(new DurationT(
         std::chrono::duration_cast<DurationT>(
             ending - timer->second.beginning)));
-
+#endif
     return true;
   }
 
@@ -128,8 +138,31 @@ class TimerManager{
    */
   void disableTimers(const std::vector<std::string>& ids){
     for(const auto& id : ids) {
-      if(timers_.find(id) != timers_.end()) {
+      auto timer = timers_.find(id);
+      if(timer != timers_.end()) {
+        timer->second.enable = false;
+      }
+    }
+  }
 
+  /**
+   * @brief Enable all timers
+  */
+  void enableTimers(){
+    for(auto& timer : timers_){
+      timer.second.enable = true;
+    }
+  }
+
+  /**
+   * @brief Enable timers with IDs specified
+   * @param ids specified IDs of timers to enable
+   */
+  void enableTimers(const std::vector<std::string>& ids){
+    for(const auto& id : ids) {
+      auto timer = timers_.find(id);
+      if(timer != timers_.end()) {
+        timer->second.enable = true;
       }
     }
   }

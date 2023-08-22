@@ -1,5 +1,6 @@
 #include<unistd.h>
 
+// #define DISABLE_ALL_TIMERS
 #include "timecost_statistic/timer_manager.hpp"
 using namespace timecost_statistic;
 using namespace std::chrono_literals;
