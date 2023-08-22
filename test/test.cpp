@@ -1,7 +1,7 @@
 #include<unistd.h>
 
-#include "timecost_statistic_ros/timer.hpp"
-using namespace time_statistic_ros;
+#include "timecost_statistic/timer_manager.hpp"
+using namespace timecost_statistic;
 using namespace std::chrono_literals;
 
 void foo1(){

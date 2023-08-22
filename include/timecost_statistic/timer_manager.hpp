@@ -10,7 +10,7 @@
 // using namespace std::chrono;
 
 
-namespace time_statistic_ros
+namespace timecost_statistic
 {
 using ClockType = std::chrono::system_clock;
 using TimePointT = std::chrono::time_point<ClockType>;

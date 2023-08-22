@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(timecost_statistic_ros)
+project(timecost_statistic)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -49,7 +49,7 @@ if(BUILD_TESTING)
 
   install(TARGETS
     ${PROJECT_NAME}_test
-    DESTINATION lib/${PROJECT_NAME}
+    DESTINATION test/${PROJECT_NAME}
   )
 
   ament_lint_auto_find_test_dependencies()
