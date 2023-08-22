@@ -5,6 +5,7 @@
 #include <mutex>
 #include <set>
 #include <iostream>
+#include <sstream>
 // #include <stack>
 // using namespace std::chrono_literals;
 // using namespace std::chrono;
@@ -32,8 +33,9 @@ class TimerManager{
 
   // ~TimerManager();
 
-  bool registerTimer(const std::string &id) {
+  inline bool registerTimer(const std::string &id) {
     timers_.insert(std::pair<std::string, Timer>(id,{}));
+    log_info_ << "Registered timer \""<< id << "\" " << std::endl;
     return true;
   }
 
@@ -44,8 +46,7 @@ class TimerManager{
   {
     auto timer = timers_.find(id);
     if(timer == timers_.end() && create_if_not_existed) {
-      // create a new timer with the id
-      timers_.insert(std::pair<std::string, Timer>(id,{}));
+      registerTimer(id);
       timer = timers_.find(id);
     } else if (!create_if_not_existed) {
       log_err_ << "Timer with ID \"" << id << "\" does not exist" << std::endl;
@@ -90,17 +91,25 @@ class TimerManager{
     return true;
   }
 
-  void flattenRecords(){
+  std::string flattenRecords(){
+    std::stringstream out;
+    flattenRecords(out);
+    log_info_ << out.str();
+    return out.str();
+  }
+
+  void flattenRecords(std::stringstream& out){
+    out.precision(6);
     for(size_t i = 0; i < max_timer_record_size_; ++i){
-      log_info_ << "Record #" << i <<": " << std::endl << "\t";
+      out << "Record #" << i <<": " << std::endl << "\t";
       for(const auto &timer : timers_) {
-        log_info_ << timer.first << ": ";
-        if(timer.second.records[i]==NULL) log_info_ << "nan | ";
+        out << timer.first << ": ";
+        if(timer.second.records[i]==NULL) out << "nan | ";
         else
-          log_info_ << std::chrono::duration_cast<std::chrono::microseconds>(
+          out << std::chrono::duration_cast<std::chrono::microseconds>(
               *timer.second.records[i]).count()*1e-3 << "ms | ";
       }
-      log_info_ << std::endl;
+      out << std::endl;
     }
   }
 
