@@ -105,10 +105,8 @@ class TimerManager{
     return true;
   }
 
-  std::string flattenRecords(){
-    std::stringstream out;
-    flattenRecords(out);
-    return out.str();
+  void flattenRecords(){
+    flattenRecords(log_info_);
   }
 
   void flattenRecords(std::ostream& out){
@@ -120,9 +118,9 @@ class TimerManager{
     }
     out << std::endl;
 #endif
-
+    out << "List of Records: \n";
     for(size_t i = 0; i < max_timer_record_size_; ++i){
-      out << "Record #" << i <<": " << std::endl << "\t";
+      out << "  [ #" << i <<" ] | ";
       for(const auto& timer : timers_) {
         out << timer.first << "(" << timer.second.count_valid <<")" << ": ";
         if(timer.second.records.size() <= i
@@ -153,7 +151,7 @@ class TimerManager{
     out << "Statistics:\n";
 
     for(const auto& timer : timers_) {
-      out << "  " << timer.first << "(count: " << timer.second.count_valid <<"): ";
+      out << "  [" << timer.first << "(count: " << timer.second.count_valid <<")] | ";
       if(timer.second.count_valid < 1) {
         for(int i=0; i < 4; ++i)
           out << "nan | ";
