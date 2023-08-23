@@ -62,6 +62,8 @@ class TimerManager{
     } else if (!create_if_not_existed) {
       log_err_ << "Timer with ID \"" << id << "\" does not exist" << std::endl;
       return false;
+    } else if (!timer->second.enable) {
+      return false;
     }
 
     timer->second.ticking = true;
@@ -80,6 +82,8 @@ class TimerManager{
     auto timer = timers_.find(id);
     if(timer == timers_.end()) {
       log_err_ << "Timer with ID \"" << id << "\" does not exist" << std::endl;
+      return false;
+    } else if(!timer->second.enable){
       return false;
     } else if (!timer->second.ticking) {
       log_err_ << "Timer with ID \"" << id << "\" is not ticking" << std::endl;
@@ -244,7 +248,7 @@ class TimerManager{
 
   struct Timer{
     bool ticking{false};
-    bool enable{false};
+    bool enable{true};
     TimePointT beginning;
     std::vector<DurationT*> records;
 
