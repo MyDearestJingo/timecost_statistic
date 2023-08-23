@@ -109,9 +109,15 @@ class TimerManager{
     flattenRecords(log_info_);
   }
 
+  /**
+   * @brief flatten records of all timers
+   * @param out ostream object that stores flattened records
+   * @todo feature: reverse output
+   * @todo feature: only output n records from head
+   * @todo feature: set output step size
+   */
   void flattenRecords(std::ostream& out){
     out.precision(6);
-
 #ifdef __DEBUG__
     for(const auto &timer : timers_) {
       out << timer.first << "(" << timer.second.records.size() <<")" << ", ";
