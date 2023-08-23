@@ -10,6 +10,7 @@
 // using namespace std::chrono_literals;
 // using namespace std::chrono;
 
+// #define __DEBUG__
 
 namespace timecost_statistic
 {
@@ -110,14 +111,26 @@ class TimerManager{
 
   void flattenRecords(std::stringstream& out){
     out.precision(6);
+
+#ifdef __DEBUG__
+    for(const auto &timer : timers_) {
+      out << timer.first << "(" << timer.second.records.size() <<")" << ", ";
+    }
+    out << std::endl;
+#endif
+
     for(size_t i = 0; i < max_timer_record_size_; ++i){
       out << "Record #" << i <<": " << std::endl << "\t";
       for(const auto &timer : timers_) {
-        out << timer.first << ": ";
-        if(timer.second.records[i]==NULL) out << "nan | ";
-        else
+        out << timer.first << "(" << timer.second.records.size() <<")" << ": ";
+        if(timer.second.records.size() <= i
+           || timer.second.records[i]==nullptr)
+        {
+          out << "nan | ";
+        } else {
           out << std::chrono::duration_cast<std::chrono::microseconds>(
-              *timer.second.records[i]).count()*1e-3 << "ms | ";
+                    *timer.second.records[i]).count()*1e-3 << "ms | ";
+        }
       }
       out << std::endl;
     }
