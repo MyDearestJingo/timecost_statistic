@@ -42,6 +42,7 @@ int main(int argc, char** argv) {
     }
   }
 
+  timers.calcStatistic();
   timers.flattenRecords();
 
   return 0;

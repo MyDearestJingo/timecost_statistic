@@ -6,6 +6,8 @@
 #include <set>
 #include <iostream>
 #include <sstream>
+#include <ostream>
+#include <cmath>
 // #include <stack>
 // using namespace std::chrono_literals;
 // using namespace std::chrono;
@@ -98,6 +100,7 @@ class TimerManager{
     records.push_back(new DurationT(
         std::chrono::duration_cast<DurationT>(
             ending - timer->second.beginning)));
+    timer->second.count_valid++;
 #endif
     return true;
   }
@@ -105,11 +108,10 @@ class TimerManager{
   std::string flattenRecords(){
     std::stringstream out;
     flattenRecords(out);
-    log_info_ << out.str();
     return out.str();
   }
 
-  void flattenRecords(std::stringstream& out){
+  void flattenRecords(std::ostream& out){
     out.precision(6);
 
 #ifdef __DEBUG__
@@ -121,8 +123,8 @@ class TimerManager{
 
     for(size_t i = 0; i < max_timer_record_size_; ++i){
       out << "Record #" << i <<": " << std::endl << "\t";
-      for(const auto &timer : timers_) {
-        out << timer.first << "(" << timer.second.records.size() <<")" << ": ";
+      for(const auto& timer : timers_) {
+        out << timer.first << "(" << timer.second.count_valid <<")" << ": ";
         if(timer.second.records.size() <= i
            || timer.second.records[i]==nullptr)
         {
@@ -135,6 +137,53 @@ class TimerManager{
       out << std::endl;
     }
   }
+
+  void calcStatistic(){
+    calcStatistic(log_info_);
+  }
+
+  void calcStatistic(std::ostream& out){
+    out.precision(6);
+    if(timers_.empty()) {
+      out << "No timers registered" << std::endl;
+      log_warn_ << "No timers registered" << std::endl;
+      return;
+    }
+
+    out << "Statistics:\n";
+
+    for(const auto& timer : timers_) {
+      out << "  " << timer.first << "(count: " << timer.second.count_valid <<"): ";
+      if(timer.second.count_valid < 1) {
+        for(int i=0; i < 4; ++i)
+          out << "nan | ";
+      } else {
+        // min
+        out << "Min: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(
+                    timer.second.min()).count()*1e-3 << "ms | ";
+
+        // max
+        out << "Max: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(
+                    timer.second.max()).count()*1e-3 << "ms | ";
+
+        // average
+        out << "Avg: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(
+                    timer.second.avg()).count()*1e-3 << "ms | ";
+
+        // stddev
+        out << "Stddev: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(
+                    timer.second.stddev()).count()*1e-3 << "ms | ";
+
+      }
+      out << std::endl;
+    }
+    out << std::endl;
+  }
+
 
   /**
    * @brief Disable all timers
@@ -194,6 +243,53 @@ class TimerManager{
     bool enable{false};
     TimePointT beginning;
     std::vector<DurationT*> records;
+
+    size_t count_valid{0};
+
+    DurationT sum() const {
+      DurationT total(0);
+      for(const auto& record : records) {
+        if(record) total += *record;
+      }
+      return total;
+    }
+
+    DurationT avg() const {
+      if(count_valid < 1) {
+        return DurationT(0);
+      }
+      return sum()/count_valid;
+    }
+
+    DurationT min() const {
+      DurationT min_duration = DurationT::max();
+      for(const auto& record : records) {
+        if(record && *record < min_duration) min_duration = *record;
+      }
+      return min_duration;
+    }
+
+    DurationT max() const {
+      DurationT max_duration = DurationT::min();
+      for(const auto& record : records) {
+        if(record && *record > max_duration) max_duration = *record;
+      }
+      return max_duration;
+    }
+
+    DurationT stddev() const {
+      if(count_valid < 1) return DurationT(0);
+
+      DurationT avg_val = this->avg();
+      double var=0.0;
+      for(const auto& record : records) {
+        if(record) var += std::pow((avg_val-*record).count(), 2);
+      }
+      var /= count_valid;
+      double stddev_val = std::sqrt(var);
+
+      return DurationT(int64_t(stddev_val));
+    }
   };
 
   std::map<std::string, Timer> timers_;
