@@ -2,7 +2,7 @@
 #include<fstream>
 #include<boost/filesystem.hpp>
 
-// #define DISABLE_ALL_TIMERS
+// #define DISABLE_TIMECOST_STATISTIC
 #include "timecost_statistic/timer_manager.hpp"
 #include "timecost_statistic/mermaid_plotter.hpp"
 using namespace timecost_statistic;
@@ -29,45 +29,26 @@ void foo3(){
 }
 
 int main(int argc, char** argv) {
-  TimerManager timers(std::cout, std::cout, std::cerr);
 
   for(int i=0; i < 3; ++i){
-    timers.startTimer("foo1_timer");
+    TS_START()
     foo1();
-    timers.startTimer("foo2_timer");
+    TS_START()
     foo2();
-    timers.endTimer();
-    timers.endTimer();
-    // timers.enableTimers({"foo1_timer"});
+    TS_END()
+    TS_END()
 
-
-    if(i%2==1) {
-      timers.startTimer("foo3_timer");
+    if(i%2==0) {
+      TS_START()
       foo3();
-      timers.endTimer();
-      // timers.disableTimers({"foo1_timer"});
+      TS_END();
     }
   }
 
-  timers.calcStatistic();
-  timers.flattenRecords();
-
-  std::ofstream file_export;
-  std::string export_path;
-  if(argc > 1) {
-    export_path = argv[0];
-  } else {
-    export_path =
-      "/home/ylan3982/agioe/ros2_ws/src/timecost_statistic/test/temp/records.txt";
-    std::cout << "Using default export path: " << export_path << std::endl;
-  }
-
-  file_export.open(export_path);
-  timers.exportRecords(file_export);
-  file_export.close();
+  TS_EXPORT_TO_TXT("/home/ylan3982/agioe/ros2_ws/src/timecost_statistic/test/temp/records.txt");
 
   MermaidPlotter plotter;
-  plotter.init(timers.getRecords());
+  plotter.init(timecost_statistic::TimerManager::getInstance().getRecords());
   std::ofstream mermaid_file;
   mermaid_file.open("/home/ylan3982/agioe/ros2_ws/src/timecost_statistic/graph/test.md");
 

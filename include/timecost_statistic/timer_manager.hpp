@@ -13,6 +13,7 @@
 #include <cmath>
 #include <stack>
 #include <memory>
+
 // using namespace std::chrono_literals;
 // using namespace std::chrono;
 
@@ -25,7 +26,7 @@ using TimePointT = std::chrono::time_point<ClockT>;
 using DurationT = std::chrono::microseconds;
 
 struct Timer;
-using TimerPtr =  std::shared_ptr<Timer>;
+using TimerPtr = std::shared_ptr<Timer>;
 
 struct Timer{
   const std::string name; // name of this timer
@@ -48,10 +49,9 @@ struct Record {
 /**
  * @brief
  * @todo change to a template class for specifying duration type
- * @todo add singleton mode
  */
 class TimerManager{
- public:
+ private:
   TimerManager()
     : log_info_(std::cout), log_warn_(std::cout), log_err_(std::cerr)
   {};
@@ -60,19 +60,29 @@ class TimerManager{
     : log_info_(info), log_warn_(warn), log_err_(err)
   {};
 
-  // ~TimerManager();
-
-  inline TimerPtr getTimer(const std::string& name) const {
+  TimerPtr getTimer(const std::string& name) const {
     std::string path =
         timer_stack_.empty() ? std::string("") : timer_stack_.top()->path + "/";
     TimerPtr new_timer(new Timer(name, path+name));
     return new_timer;
   }
 
-  inline bool startTimer(
-      const std::string& name,
+ public:
+  static TimerManager& getInstance() {
+    static TimerManager instance;
+    return instance;
+  }
+
+  ~TimerManager() {
+    calcStatistic();
+    flattenRecords();
+  }
+
+  bool startTimer(
+      std::string name,
       const TimePointT* beginning=nullptr)
   {
+    std::replace(name.begin(), name.end(), '/', '_');
     if(inactive_timers_.find(name) != inactive_timers_.end()) {
       return false;
     }
@@ -90,7 +100,7 @@ class TimerManager{
     return true;
   }
 
-  inline bool endTimer(
+  bool endTimer(
       const TimePointT ending=std::chrono::high_resolution_clock::now())
   {
     if(timer_stack_.empty()) {
@@ -161,22 +171,6 @@ class TimerManager{
     out << std::endl;
 #endif
     out << "List of Records: \n";
-
-    // for(size_t i = 0; i < max_timer_record_size_; ++i){
-    //   out << "  [ #" << i <<" ] | ";
-    //   for(const auto& timer : timers_) {
-    //     out << timer.first << "(" << timer.second.count_valid <<")" << ": ";
-    //     if(timer.second.records.size() <= i
-    //        || timer.second.records[i]==nullptr)
-    //     {
-    //       out << "nan | ";
-    //     } else {
-    //       out << std::chrono::duration_cast<std::chrono::microseconds>(
-    //                 *timer.second.records[i]).count()*1e-3 << "ms | ";
-    //     }
-    //   }
-    //   out << std::endl;
-    // }
 
     size_t i = 0;
     for(const auto& record : records_) {
@@ -315,7 +309,6 @@ class TimerManager{
   }
 
  private:
-
   std::mutex mtx_;
 
   std::ostream& log_info_;
@@ -328,6 +321,33 @@ class TimerManager{
   std::vector<Record> records_;
 };
 
-} // namespace time_statistic_ros
+} // namespace time_statistic
+
+
+//===============================================
+//                    Macros
+//===============================================
+
+#ifdef DISABLE_TIMECOST_STATISTIC
+
+#define TS_START()
+#define TS_END()
+
+#else
+
+#define TS_START() \
+  timecost_statistic::TimerManager::getInstance().startTimer( \
+      std::string(__FILE__) + ":" + std::string(__FUNCTION__) + ":" + std::to_string(__LINE__));
+
+#define TS_END() \
+  timecost_statistic::TimerManager::getInstance().endTimer();
+
+#define TS_EXPORT_TO_TXT(filepath) \
+  std::ofstream fs; \
+  fs.open(filepath); \
+  timecost_statistic::TimerManager::getInstance().exportRecords(fs); \
+  fs.close(); \
+
+#endif
 
 #endif
