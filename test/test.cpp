@@ -1,4 +1,5 @@
 #include<unistd.h>
+#include<fstream>
 
 // #define DISABLE_ALL_TIMERS
 #include "timecost_statistic/timer_manager.hpp"
@@ -28,7 +29,7 @@ void foo3(){
 int main(int argc, char** argv) {
   TimerManager timers(std::cout, std::cout, std::cerr);
 
-  for(int i=0; i < 3; ++i){
+  for(int i=0; i < 102; ++i){
     timers.startTimer("foo1_timer");
     foo1();
     timers.startTimer("foo2_timer");
@@ -48,6 +49,20 @@ int main(int argc, char** argv) {
 
   timers.calcStatistic();
   timers.flattenRecords();
+
+  std::ofstream file_export;
+  std::string export_path;
+  if(argc > 1) {
+    export_path = argv[0];
+  } else {
+    export_path =
+      "/home/ylan3982/agioe/ros2_ws/src/timecost_statistic/test/temp/records.txt";
+    std::cout << "Using default export path: " << export_path << std::endl;
+  }
+
+  file_export.open(export_path);
+  timers.exportRecords(file_export);
+  file_export.close();
 
   return 0;
 }

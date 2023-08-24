@@ -284,6 +284,29 @@ class TimerManager{
     // out << std::endl;
   }
 
+  bool exportRecords(std::ostream& out) {
+    // log_info_ << "Export " << records_.size() << " records ..." << std::endl;
+    std::string indentation = "  ";
+    out.precision(6);
+    size_t count = 0;
+    for(const auto& record : records_) {
+      if((++count % 50)==0)
+        log_info_ << "Exporting " << count << "/" << records_.size()
+                  << " record ..." << std::endl;
+
+      out << "Record #" << record.id << ":\n";
+      for(const auto& timer : record.timers) {
+        out << indentation << timer->path << ": "
+            << std::chrono::duration_cast<std::chrono::microseconds>(
+                    timer->duration).count()*1e-3 << "ms"
+            << std::endl;
+      }
+      out << std::endl;
+    }
+    log_info_ << "Exported " << count << " records" << std::endl;
+    return true;
+  }
+
  private:
 
   std::mutex mtx_;
