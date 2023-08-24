@@ -1,8 +1,10 @@
 #include<unistd.h>
 #include<fstream>
+#include<boost/filesystem.hpp>
 
 // #define DISABLE_ALL_TIMERS
 #include "timecost_statistic/timer_manager.hpp"
+#include "timecost_statistic/mermaid_plotter.hpp"
 using namespace timecost_statistic;
 using namespace std::chrono_literals;
 
@@ -29,21 +31,21 @@ void foo3(){
 int main(int argc, char** argv) {
   TimerManager timers(std::cout, std::cout, std::cerr);
 
-  for(int i=0; i < 102; ++i){
+  for(int i=0; i < 3; ++i){
     timers.startTimer("foo1_timer");
     foo1();
     timers.startTimer("foo2_timer");
     foo2();
     timers.endTimer();
     timers.endTimer();
-    timers.enableTimers({"foo1_timer"});
+    // timers.enableTimers({"foo1_timer"});
 
 
-    if(i%2==0) {
+    if(i%2==1) {
       timers.startTimer("foo3_timer");
       foo3();
       timers.endTimer();
-      timers.disableTimers({"foo1_timer"});
+      // timers.disableTimers({"foo1_timer"});
     }
   }
 
@@ -63,6 +65,14 @@ int main(int argc, char** argv) {
   file_export.open(export_path);
   timers.exportRecords(file_export);
   file_export.close();
+
+  MermaidPlotter plotter;
+  plotter.init(timers.getRecords());
+  std::ofstream mermaid_file;
+  mermaid_file.open("/home/ylan3982/agioe/ros2_ws/src/timecost_statistic/graph/test.md");
+
+  plotter.exportGraph(mermaid_file);
+  mermaid_file.close();
 
   return 0;
 }

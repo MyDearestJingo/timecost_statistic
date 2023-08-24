@@ -15,7 +15,15 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-include_directories(include)
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+find_package(Boost COMPONENTS filesystem)
+
+include_directories(
+  include
+  ${Boost_INCLUDE_DIRS}
+)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -43,9 +51,9 @@ if(BUILD_TESTING)
   add_executable(${PROJECT_NAME}_test
     test/test.cpp
   )
-  # target_link_libraries(${PROJECT_NAME}_test
-  #   ${PROJECT_NAME}_core
-  # )
+  target_link_libraries(${PROJECT_NAME}_test
+    ${Boost_LIBRARIES}
+  )
 
   install(TARGETS
     ${PROJECT_NAME}_test

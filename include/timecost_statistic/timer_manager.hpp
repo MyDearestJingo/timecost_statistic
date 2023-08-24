@@ -1,3 +1,6 @@
+#ifndef __TIMER_MANAGER_HPP__
+#define __TIMER_MANAGER_HPP__
+
 #include <chrono>
 #include <string>
 #include <vector>
@@ -61,7 +64,7 @@ class TimerManager{
 
   inline TimerPtr getTimer(const std::string& name) const {
     std::string path =
-        timer_stack_.empty() ? std::string("/") : timer_stack_.top()->path + "/";
+        timer_stack_.empty() ? std::string("") : timer_stack_.top()->path + "/";
     TimerPtr new_timer(new Timer(name, path+name));
     return new_timer;
   }
@@ -132,6 +135,10 @@ class TimerManager{
         inactive_timers_.erase(timer);
       }
     }
+  }
+
+  const std::vector<Record>& getRecords() const {
+    return records_;
   }
 
   void flattenRecords(){
@@ -322,3 +329,5 @@ class TimerManager{
 };
 
 } // namespace time_statistic_ros
+
+#endif
