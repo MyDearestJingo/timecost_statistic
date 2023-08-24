@@ -26,7 +26,7 @@ void foo3(){
 }
 
 int main(int argc, char** argv) {
-  TimerManager timers;
+  TimerManager timers(std::cout, std::cout, std::cerr);
 
   for(int i=0; i < 3; ++i){
     timers.startTimer("foo1_timer");

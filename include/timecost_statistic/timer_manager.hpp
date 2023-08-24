@@ -44,7 +44,6 @@ struct Record {
 
 /**
  * @brief
- * @todo offer interface for setting log message stream
  * @todo change to a template class for specifying duration type
  * @todo add singleton mode
  */
@@ -52,9 +51,11 @@ class TimerManager{
  public:
   TimerManager()
     : log_info_(std::cout), log_warn_(std::cout), log_err_(std::cerr)
-  {
+  {};
 
-  };
+  TimerManager(std::ostream& info, std::ostream& warn, std::ostream& err)
+    : log_info_(info), log_warn_(warn), log_err_(err)
+  {};
 
   // ~TimerManager();
 
