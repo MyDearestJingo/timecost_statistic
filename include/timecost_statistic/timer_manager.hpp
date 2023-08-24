@@ -104,6 +104,36 @@ class TimerManager{
     return true;
   }
 
+  /**
+   * @brief Disable timers with IDs specified
+   * @param names specified names of timers to disable
+   */
+  void disableTimers(const std::vector<std::string>& names){
+    for(const auto& name : names) {
+      inactive_timers_.insert(name);
+    }
+  }
+
+  /**
+   * @brief Enable all timers
+  */
+  void enableAllTimers(){
+    inactive_timers_.clear();
+  }
+
+  /**
+   * @brief Enable timers with IDs specified
+   * @param names specified names of timers to enable
+   */
+  void enableTimers(const std::vector<std::string>& names){
+    for(const auto& name : names) {
+      auto timer = inactive_timers_.find(name);
+      if(timer != inactive_timers_.end()){
+        inactive_timers_.erase(timer);
+      }
+    }
+  }
+
   void flattenRecords(){
     flattenRecords(log_info_);
   }
@@ -254,40 +284,9 @@ class TimerManager{
     // out << std::endl;
   }
 
-  /**
-   * @brief Disable timers with IDs specified
-   * @param names specified names of timers to disable
-   */
-  void disableTimers(const std::vector<std::string>& names){
-    for(const auto& name : names) {
-      inactive_timers_.insert(name);
-    }
-  }
-
-  /**
-   * @brief Enable all timers
-  */
-  void enableAllTimers(){
-    inactive_timers_.clear();
-  }
-
-  /**
-   * @brief Enable timers with IDs specified
-   * @param names specified names of timers to enable
-   */
-  void enableTimers(const std::vector<std::string>& names){
-    for(const auto& name : names) {
-      auto timer = inactive_timers_.find(name);
-      if(timer != inactive_timers_.end()){
-        inactive_timers_.erase(timer);
-      }
-    }
-  }
-
  private:
 
   std::mutex mtx_;
-  size_t max_timer_record_size_{0};
 
   std::ostream& log_info_;
   std::ostream& log_warn_;
