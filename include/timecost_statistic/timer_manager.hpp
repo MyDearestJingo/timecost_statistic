@@ -22,67 +22,17 @@ using TimePointT = std::chrono::time_point<ClockT>;
 using DurationT = std::chrono::microseconds;
 
 struct Timer;
-// using TimerRegT = std::pair<std::string, Timer>;
-// using TimerRegPtr = std::shared_ptr<TimerRegT>;
 using TimerPtr =  std::shared_ptr<Timer>;
 
 struct Timer{
-  const std::string name;                 // name of this timer
-  const std::string path;                   // full path from root to this timer
-  // bool ticking{false};
-  // bool enable{true};
+  const std::string name; // name of this timer
+  const std::string path; // full path from root to this timer
   TimePointT beginning;
-  // std::vector<TimerPtr> childs;
-  std::vector<DurationT> records;
   DurationT duration;
 
   Timer(const std::string& name_, const std::string& path_)
     : name(name_), path(path_){}
 
-  DurationT sum() const {
-    DurationT total(0);
-    for(const auto& record : records) {
-      total += record;
-    }
-    return total;
-  }
-
-  DurationT avg() const {
-    if(records.size() < 1) {
-      return DurationT(0);
-    }
-    return sum()/records.size();
-  }
-
-  DurationT min() const {
-    DurationT min_duration = DurationT::max();
-    for(const auto& record : records) {
-      if(record < min_duration) min_duration = record;
-    }
-    return min_duration;
-  }
-
-  DurationT max() const {
-    DurationT max_duration = DurationT::min();
-    for(const auto& record : records) {
-      if(record > max_duration) max_duration = record;
-    }
-    return max_duration;
-  }
-
-  DurationT stddev() const {
-    if(records.size() < 1) return DurationT(0);
-
-    DurationT avg_val = this->avg();
-    double var=0.0;
-    for(const auto& record : records) {
-      var += std::pow((avg_val-record).count(), 2);
-    }
-    var /= records.size();
-    double stddev_val = std::sqrt(var);
-
-    return DurationT(int64_t(stddev_val));
-  }
 };
 
 struct Record {
@@ -96,7 +46,6 @@ struct Record {
  * @brief
  * @todo offer interface for setting log message stream
  * @todo change to a template class for specifying duration type
- * @todo use a stack to organize the waking up order of timers
  * @todo add singleton mode
  */
 class TimerManager{
@@ -149,7 +98,6 @@ class TimerManager{
     timer_stack_.pop();
     timer->duration =
         std::chrono::duration_cast<DurationT>(ending - timer->beginning);
-    timer->records.emplace_back(timer->duration);
 
     records_.back().timers.push_back(timer);
     return true;
@@ -211,11 +159,6 @@ class TimerManager{
 
   void calcStatistic(std::ostream& out){
     out.precision(6);
-    // if(timers_.empty()) {
-    //   out << "No timers registered" << std::endl;
-    //   log_warn_ << "No timers registered" << std::endl;
-    //   return;
-    // }
     if(records_.empty()) {
       log_warn_ << "No records found" << std::endl;
       return;
@@ -309,16 +252,6 @@ class TimerManager{
     }
     // out << std::endl;
   }
-
-
-  // /**
-  //  * @brief Disable all timers
-  // */
-  // void disableTimers(){
-  //   for(auto& timer : timers_){
-  //     timer.second.enable = false;
-  //   }
-  // }
 
   /**
    * @brief Disable timers with IDs specified
