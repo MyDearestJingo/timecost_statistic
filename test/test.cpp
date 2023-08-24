@@ -14,6 +14,8 @@ void foo1(){
 void foo2(){
   std::cout << "foo2 running" << std::endl;
   sleep(0);
+
+
   // sleep(0.2222);
 }
 
@@ -29,16 +31,18 @@ int main(int argc, char** argv) {
   for(int i=0; i < 3; ++i){
     timers.startTimer("foo1_timer");
     foo1();
-    timers.endTimer("foo1_timer");
-
     timers.startTimer("foo2_timer");
     foo2();
-    timers.endTimer("foo2_timer");
+    timers.endTimer();
+    timers.endTimer();
+    timers.enableTimers({"foo1_timer"});
+
 
     if(i%2==0) {
       timers.startTimer("foo3_timer");
       foo3();
-      timers.endTimer("foo3_timer");
+      timers.endTimer();
+      timers.disableTimers({"foo1_timer"});
     }
   }
 
