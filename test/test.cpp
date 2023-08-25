@@ -10,6 +10,8 @@ using namespace std::chrono_literals;
 
 #include "timecost_statistic/yaml_exporter.hpp"
 
+#include "timecost_statistic/yaml_exporter.hpp"
+
 void foo1(){
   std::cout << "foo1 running" << std::endl;
   sleep(0);

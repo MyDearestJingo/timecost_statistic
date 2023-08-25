@@ -3,10 +3,11 @@
 namespace timecost_statistic
 {
 
-void YamlExporter::dump(const std::vector<Record> data, const std::string& path) {
+void YamlExporter::dump(const std::vector<Record>& data, const std::string& path) {
   YAML::Node n;
   for (const auto& record : data) {
-    for (const auto& timer : record.timers) {
+    for (int i = record.timers.size() - 1; i >=0; --i) {
+      const auto& timer = record.timers[i];
       std::string full_name = timer->path;
       if (full_name.substr(0, 1) == "/") {
         full_name.erase(0, 1);
@@ -14,11 +15,11 @@ void YamlExporter::dump(const std::vector<Record> data, const std::string& path)
       std::vector<YAML::Node> v_node;
       v_node.push_back(n[std::string("#") + std::to_string(record.id)]);
       auto v_full_name = split_str(full_name, '/');
-      for (const auto sub_name : v_full_name) {
-        YAML::Node node = v_node.back()[sub_name];
+      for (const auto& sub_name : v_full_name) {
+        YAML::Node node = v_node.back()[std::string("[R]") + sub_name];
         v_node.push_back(node);
       }
-      v_node.back()["T"] = double(timer->duration.count() * 1e-3);
+      v_node.back()["time"] = std::to_string((timer->duration.count() * 1e-3)) + "ms";
     }
   }
   save_yaml("test.yaml", n);

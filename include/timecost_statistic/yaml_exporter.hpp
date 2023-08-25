@@ -25,7 +25,7 @@ inline std::vector<std::string> split_str(const std::string& s, const char delim
 
 class YamlExporter {
  public:
-  void dump(const std::vector<Record> data, const std::string& path);
+  void dump(const std::vector<Record>& data, const std::string& path);
 
  private:
   bool load_yaml(const std::string& f, YAML::Node& n);

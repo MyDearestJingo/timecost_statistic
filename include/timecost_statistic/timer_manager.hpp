@@ -86,6 +86,10 @@ class TimerManager{
     flattenRecords();
   }
 
+  std::vector<Record> &getRecords() {
+    return records_;
+  }
+
   bool startTimer(
       std::string name,
       const TimePointT* beginning=nullptr)
