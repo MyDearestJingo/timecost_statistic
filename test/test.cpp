@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 
   std::ofstream mermaid_file;
   mermaid_file.open("/home/ylan3982/agioe/ros2_ws/src/timecost_statistic/graph/test.md");
-  plotter.exportGraph(mermaid_file);
+  plotter.exportMermaidFile(mermaid_file);
   mermaid_file.close();
 
   return 0;

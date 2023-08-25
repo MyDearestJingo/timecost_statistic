@@ -89,7 +89,7 @@ class MermaidPlotter {
     return true;
   }
 
-  bool exportGraph(std::ofstream& mermaid_file) {
+  bool exportMermaidFile(std::ofstream& mermaid_file) {
     for(const auto& tree : trees_){
       mermaid_file << "```mermaid\nmindmap" << std::endl;
       exportTree(mermaid_file, tree->root, 0);
@@ -118,14 +118,44 @@ class MermaidPlotter {
   void exportTree(std::ofstream& out, const RecordTreeNodePtr root, int level){
     // pre-order traversal
     if(level < 1){
-      out << getIndention(level+1) << "root((" <<root->name << "))" << std::endl;
+      out << getIndention(level+1)
+          << "root((\"`" << stringNodeInfo(root) << "`\"))"
+          << std::endl;
     } else {
-      out << getIndention(level+1) << root->name << std::endl;
+      out << getIndention(level+1)
+          << "[\"`" << stringNodeInfo(root) << "`\"] "<< std::endl;
     }
     for(const auto& child : root->children) {
       exportTree(out, child, level+1);
     }
     // out << std::endl;
+  }
+
+  /**
+   * @brief output information of the timer given by the node
+   * @todo complete usage of arg flag
+   * @param node
+   * @param flag option for indicating what info to output
+   * @return
+   */
+  std::string stringNodeInfo(const RecordTreeNodePtr node, int flag=0xf){
+    std::stringstream ss;
+    ss << node->name;
+
+    // if output count
+    ss << '(' << node->records.size() << ')';
+
+    // if output min
+
+    // if output max
+
+    // if output avg
+
+    // if output stddev
+
+    // if output portion
+
+    return ss.str();
   }
 
   RecordTreeNodePtr getTreeNode(
