@@ -15,25 +15,32 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(yaml-cpp REQUIRED)
+find_package(Boost COMPONENTS filesystem)
+
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost COMPONENTS filesystem)
 
 include_directories(
   include
   ${Boost_INCLUDE_DIRS}
 )
 
-# find dependencies
-find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+add_library(yaml_exporter SHARED
+  src/yaml_exporter.cpp
+)
+target_link_libraries(yaml_exporter
+  yaml-cpp
+)
 
-# add_library(${PROJECT_NAME}_core
-#   include/${PROJECT_NAME}/timer.hpp
-# )
+install(TARGETS yaml_exporter
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
 
 install(
   DIRECTORY include/
@@ -52,6 +59,7 @@ if(BUILD_TESTING)
     test/test.cpp
   )
   target_link_libraries(${PROJECT_NAME}_test
+    yaml_exporter
     ${Boost_LIBRARIES}
   )
 

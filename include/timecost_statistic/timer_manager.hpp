@@ -1,5 +1,5 @@
-#ifndef __TIMER_MANAGER_HPP__
-#define __TIMER_MANAGER_HPP__
+#ifndef TIMER_MANAGER_HPP
+#define TIMER_MANAGER_HPP
 
 #include <chrono>
 #include <string>
@@ -21,6 +21,14 @@
 
 namespace timecost_statistic
 {
+
+inline void replace_str(std::string& s, const std::string a, const std::string b) {
+    size_t pos;
+    while ((pos = s.find(a)) != std::string::npos) {
+        s.replace(pos, a.length(), b);
+    }
+}
+
 using ClockT = std::chrono::system_clock;
 using TimePointT = std::chrono::time_point<ClockT>;
 using DurationT = std::chrono::microseconds;
@@ -330,14 +338,25 @@ class TimerManager{
 
 #ifdef DISABLE_TIMECOST_STATISTIC
 
-#define TS_START()
+#define TS_START(name)
 #define TS_END()
+#define TS_EXPORT_TO_TXT(filepath)
 
 #else
 
-#define TS_START() \
-  timecost_statistic::TimerManager::getInstance().startTimer( \
-      std::string(__FILE__) + ":" + std::string(__FUNCTION__) + ":" + std::to_string(__LINE__));
+#define TS_START(name) \
+  do { \
+    std::string timer_name{name}; \
+    if (timer_name.empty()) { \
+      timer_name = std::string(__FILE__) + "_" + \
+        std::string(__FUNCTION__) + "_" + \
+        std::to_string(__LINE__); \
+      timer_name = timer_name.substr(timer_name.find_last_of("/") + 1); \
+    } else { \
+      timecost_statistic::replace_str(timer_name, "/", "_"); \
+    } \
+    timecost_statistic::TimerManager::getInstance().startTimer(timer_name); \
+  } while (0);
 
 #define TS_END() \
   timecost_statistic::TimerManager::getInstance().endTimer();
@@ -350,4 +369,4 @@ class TimerManager{
 
 #endif
 
-#endif
+#endif  // TIME_MANAGER_HPP

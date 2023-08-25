@@ -8,6 +8,8 @@
 using namespace timecost_statistic;
 using namespace std::chrono_literals;
 
+#include "timecost_statistic/yaml_exporter.hpp"
+
 void foo1(){
   std::cout << "foo1 running" << std::endl;
   sleep(0);
@@ -31,7 +33,7 @@ void foo3(){
 int main(int argc, char** argv) {
 
   for(int i=0; i < 3; ++i){
-    TS_START()
+    TS_START("custom")
     foo1();
     TS_START()
     foo2();
@@ -45,13 +47,16 @@ int main(int argc, char** argv) {
     }
   }
 
-  TS_EXPORT_TO_TXT("/home/ylan3982/agioe/ros2_ws/src/timecost_statistic/test/temp/records.txt");
+  TS_EXPORT_TO_TXT("records.txt");
+
+  timecost_statistic::YamlExporter exporter;
+  exporter.dump(timecost_statistic::TimerManager::getInstance().getRecords(), "");
 
   MermaidPlotter plotter;
   plotter.init(timecost_statistic::TimerManager::getInstance().getRecords());
+
   std::ofstream mermaid_file;
   mermaid_file.open("/home/ylan3982/agioe/ros2_ws/src/timecost_statistic/graph/test.md");
-
   plotter.exportGraph(mermaid_file);
   mermaid_file.close();
 
