@@ -1,24 +1,34 @@
 #include <memory>
 #include <fstream>
 #include <vector>
+#include <set>
+#include <string>
 #include <boost/filesystem.hpp>
 #include "timecost_statistic/timer_manager.hpp"
 
 namespace timecost_statistic
 {
 
-struct TimerNode;
-using TimerNodePtr = std::shared_ptr<TimerNode>;
+struct RecordTreeNode;
+using RecordTreeNodePtr = std::shared_ptr<RecordTreeNode>;
 
-struct TimerNode {
+struct RecordTreeNode {
   const std::string name;
   std::vector<Timer> records;
-  std::vector<TimerNodePtr> children;
+  std::vector<RecordTreeNodePtr> children;
 
-  TimerNode(const TimerPtr timer) : name(timer->name)
+  RecordTreeNode(const TimerPtr timer) : name(timer->name)
   { records.push_back(*timer); }
 
-  TimerNode(const std::string& name) : name(name) {}
+  RecordTreeNode(const std::string& name) : name(name) {}
+};
+
+struct RecordTree;
+using RecordTreePtr = std::shared_ptr<RecordTree>;
+
+struct RecordTree {
+  RecordTreeNodePtr root;
+  size_t num;
 };
 
 class MermaidPlotter {
@@ -26,19 +36,63 @@ class MermaidPlotter {
   void init(const std::vector<Record>& records) {
     std::cout << "Init from " << records.size() << " records" << std::endl;
     for(const auto& record : records) {
+      RecordTreePtr found(nullptr);
+      for(const auto& tree : trees_) {
+        if(sameStructure(record, *tree)) {
+          found = tree;
+          break;
+        }
+      }
+
+      // not found, create a new tree
+      if(!found) {
+        found = createTree(record.timers);
+        trees_.push_back(found);
+      }
+
+      // fill the tree
       for(const auto& timer : record.timers) {
-        TimerNodePtr node = getTreeNode(timer->path);
+        RecordTreeNodePtr node = getTreeNode(
+            boost::filesystem::path(timer->path).begin(), found->root, false);
         node->records.push_back(*timer);
       }
     }
-    std::cout << "Generate " << trees_.size() << " trees" << std::endl;
+    std::cout << "Generated " << trees_.size() << " trees"
+              << " from " << records.size() << " records" << std::endl;
+
+    // for(const auto& tree : trees_) {
+    //   std::cout << "Tree contains " << tree->root->records.size()
+    //             << " duration records" << std::endl;
+    // }
     // printAllTrees();
+  }
+
+  /**
+   * @brief Check if the record has the same structure with the tree
+   * @param record the input record
+   * @param tree the root node of the tree compared
+   * @return true or not
+   **/
+  bool sameStructure(const Record& record, const RecordTree& tree) {
+    if(record.timers.size() != tree.num) {
+      // std::cout << "Unequal number of nodes" << std::endl;
+      return false;
+    }
+
+    for(const auto& timer : record.timers) {
+      boost::filesystem::path path(timer->path);
+      if(!getTreeNode(path.begin(), tree.root, false)) {
+        // std::cout << "Failed to find node at path: " << path.generic_string() << std::endl;
+        return false;
+      }
+    }
+    return true;
   }
 
   bool exportGraph(std::ofstream& mermaid_file) {
     for(const auto& tree : trees_){
       mermaid_file << "```mermaid\nmindmap" << std::endl;
-      exportTree(mermaid_file, tree, 0);
+      exportTree(mermaid_file, tree->root, 0);
       mermaid_file << "```\n" << std::endl;
     }
 
@@ -47,13 +101,13 @@ class MermaidPlotter {
 
   void printAllTrees() {
     for(const auto& tree : trees_) {
-      std::cout << "Tree with root: " << tree->name << std::endl;
-      preorderTraverse(tree);
+      std::cout << "Tree with root: " << tree->root->name << std::endl;
+      preorderTraverse(tree->root);
       std::cout << std::endl;
     }
   }
 
-  void preorderTraverse(const TimerNodePtr tree) {
+  void preorderTraverse(const RecordTreeNodePtr tree) {
     std::cout << tree->name << std::endl;
     for(const auto& child : tree->children) {
       preorderTraverse(child);
@@ -61,7 +115,7 @@ class MermaidPlotter {
   }
 
  private:
-  void exportTree(std::ofstream& out, const TimerNodePtr root, int level){
+  void exportTree(std::ofstream& out, const RecordTreeNodePtr root, int level){
     // pre-order traversal
     if(level < 1){
       out << getIndention(level+1) << "root((" <<root->name << "))" << std::endl;
@@ -74,55 +128,42 @@ class MermaidPlotter {
     // out << std::endl;
   }
 
-  TimerNodePtr getTreeNode(const boost::filesystem::path& path)
+  RecordTreeNodePtr getTreeNode(
+      const boost::filesystem::path::iterator path_iter,
+      RecordTreeNodePtr tree, bool create_if_not_existing=true)
   {
-    TimerNodePtr node(nullptr);
-    std::string root_name = path.begin()->c_str();
-    // std::cout << "Searching path: " << path.c_str() << std::endl;
+    if(path_iter->empty() || !tree) return tree;
 
-    if(root_name.empty()) return node;
-
-    for(auto& tree : trees_) {
-      if(tree->name == root_name) {
-        // std::cout << "Find the node with name: " << root_name << std::endl;
-        node = getTreeNode(++path.begin(), tree);  // recursive search
-        if(node!=nullptr) return node;
+    RecordTreeNodePtr found(nullptr);
+    if(path_iter->string() == tree->name) {
+      auto next = path_iter; ++next;
+      if(next->empty()) {
+        found = tree;
+      } else {
+        for(auto& child : tree->children) {
+          found = getTreeNode(next, child, create_if_not_existing);
+          if(found) break;
+        }
       }
     }
 
-    // not found, so create a new branch to this node
-    TimerNodePtr new_root(new TimerNode(root_name));
-    trees_.push_back(new_root);
-    // std::cout << "Creating a new tree with root name: " << new_root->name << std::endl;
-    return createBranch(++path.begin(), new_root);
-  }
-
-  TimerNodePtr getTreeNode(
-      boost::filesystem::path::iterator path_iter, TimerNodePtr tree)
-  {
-    if(path_iter->empty()) return tree;
-
-    std::string name = path_iter->c_str();
-
-    TimerNodePtr node(nullptr);
-    for(auto& child : tree->children) {
-      if(child->name == name) {
-        auto next = path_iter;
-        node = getTreeNode(++next, child);
-        if(node != nullptr) return node;
-      }
-    }
+    if(!create_if_not_existing) return found;
 
     // not found, so create a new branch to this node
-    return createBranch(path_iter, tree);
+    // std::cout << "Creating new branch for path: ";
+    // for(auto iter = path_iter; !iter->empty(); ++iter) {
+    //   std::cout << iter->string() << "/";
+    // }
+    // std::cout << std::endl;
+    auto next = path_iter;
+    return createBranch(++next, tree);
   }
 
-  TimerNodePtr createBranch(
-      boost::filesystem::path::iterator path_iter,
-      TimerNodePtr parent)
+  RecordTreeNodePtr createBranch(
+      boost::filesystem::path::iterator path_iter, RecordTreeNodePtr parent)
   {
     if(path_iter->empty()) return parent;
-    TimerNodePtr new_node(new TimerNode(path_iter->c_str()));
+    RecordTreeNodePtr new_node(new RecordTreeNode(path_iter->c_str()));
     parent->children.push_back(new_node);
     // std::cout << "Add child node \"" << new_node->name << "\" to parent \"" << parent->name << "\"" << std::endl;
     return createBranch(++path_iter, new_node);
@@ -132,8 +173,29 @@ class MermaidPlotter {
     return std::string(level*base_length, ' ');
   }
 
+  RecordTreePtr createTree(const std::vector<TimerPtr>& timers) {
+    if(timers.empty()) return nullptr;
+
+    // create the root node of the new tree
+    std::string root_name =
+        boost::filesystem::path(timers.front()->path).begin()->c_str();
+    RecordTreePtr new_tree(new RecordTree);
+    new_tree->root.reset(new RecordTreeNode(root_name));
+    // std::cout << "Creating a new tree with root name: " << root_name << std::endl;
+
+    // create branches
+    for(const auto& timer : timers) {
+      getTreeNode(
+        boost::filesystem::path(timer->path).begin(), new_tree->root, true);
+    }
+
+    new_tree->num = timers.size();
+
+    return new_tree;
+  }
+
  private:
-  std::vector<TimerNodePtr> trees_;
+  std::vector<RecordTreePtr> trees_;
 };
 
 } // namespace timecost_statistic

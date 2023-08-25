@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  TS_EXPORT_TO_TXT("records.txt");
+  TS_EXPORT_TO_TXT("/home/ylan3982/agioe/ros2_ws/src/timecost_statistic/test/temp/records.txt");
 
   timecost_statistic::YamlExporter exporter;
   exporter.dump(timecost_statistic::TimerManager::getInstance().getRecords(), "");
