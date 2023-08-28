@@ -32,7 +32,7 @@ struct RecordTreeNode {
       child->proportion = float(std::accumulate(child->records.begin(),
                                                 child->records.end(),
                                                 DurationT(0)).count()
-                         ) / child->records.size() / avg.count();
+                          ) / child->records.size() / avg.count();
     }
   }
 };
@@ -121,17 +121,20 @@ class MermaidPlotter {
 
   void printAllTrees() {
     for(const auto& tree : trees_) {
-      std::cout << "Tree with root: " << tree->root->name << std::endl;
-      preorderTraverse(tree->root);
+      std::cout << "Pre-order traversal of tree with root: "
+                << tree->root->name << std::endl;
+      preorderTraverse(tree->root, 0);
       std::cout << std::endl;
     }
   }
 
-  void preorderTraverse(const RecordTreeNodePtr tree) {
-    std::cout << tree->name << std::endl;
+  void preorderTraverse(const RecordTreeNodePtr tree, int level) {
+    std::cout << "---> " << getIndention(level)
+              << tree->name << " has children: " << std::endl;
     for(const auto& child : tree->children) {
-      preorderTraverse(child);
+      preorderTraverse(child, level+1);
     }
+    std::cout << "<--- " << getIndention(level) << tree->name << " END" << std::endl;
   }
 
  private:
@@ -205,29 +208,35 @@ class MermaidPlotter {
       const boost::filesystem::path::iterator path_iter,
       RecordTreeNodePtr tree, bool create_if_not_existing=true)
   {
-    if(path_iter->empty() || !tree) return tree;
+    if(!tree) return tree;
 
+    // std::cout << "Searching " << path_iter->string() << " at parent: " << tree->name << std::endl;
     RecordTreeNodePtr found(nullptr);
     if(path_iter->string() == tree->name) {
       auto next = path_iter; ++next;
       if(next->empty()) {
-        found = tree;
+        return tree;
       } else {
         for(auto& child : tree->children) {
           found = getTreeNode(next, child, create_if_not_existing);
-          if(found) break;
+          if(found) {
+            // std::cout << "Node \"" << next->string() << "\" found" << std::endl;
+            return found;
+          }
         }
       }
+    } else {
+      return nullptr;
     }
 
     if(!create_if_not_existing) return found;
 
     // not found, so create a new branch to this node
-    // std::cout << "Creating new branch for path: ";
+    // std::cout << "Node not found, creating new branch for path: ";
     // for(auto iter = path_iter; !iter->empty(); ++iter) {
     //   std::cout << iter->string() << "/";
     // }
-    // std::cout << std::endl;
+    // std::cout << " from parent node: " << tree->name << std::endl;
     auto next = path_iter;
     return createBranch(++next, tree);
   }

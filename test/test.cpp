@@ -32,13 +32,28 @@ void foo3(){
   // sleep(0.3333);
 }
 
+void foo4(){
+  std::cout << "foo4 running" << std::endl;
+  sleep(0);
+  // sleep(0.3333);
+}
+
 int main(int argc, char** argv) {
 
   for(int i=0; i < 3; ++i){
-    TS_START("custom")
+    TS_START("foo1")
     foo1();
-    TS_START()
+    TS_START("foo3")
+    foo3();
+    TS_END()
+    TS_START("foo2")
     foo2();
+    TS_START("foo3")
+    foo3();
+    TS_END()
+    TS_START("foo4")
+    foo4();
+    TS_END()
     TS_END()
     TS_END()
 
