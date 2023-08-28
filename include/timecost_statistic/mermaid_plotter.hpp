@@ -14,15 +14,27 @@ using RecordTreeNodePtr = std::shared_ptr<RecordTreeNode>;
 
 struct RecordTreeNode {
   const std::string name;
-  // std::vector<Timer> records;
   std::vector<DurationT> records;
   std::vector<RecordTreeNodePtr> children;
+  float proportion{1.0};
 
   RecordTreeNode(const TimerPtr timer) : name(timer->name){
     records.push_back(timer->duration);
   }
 
   RecordTreeNode(const std::string& name) : name(name) {}
+
+  void calcAvgProportion() {
+    DurationT avg = std::accumulate(records.begin(),
+                                    records.end(), DurationT(0)
+                    ) / records.size();
+    for(auto& child : children) {
+      child->proportion = float(std::accumulate(child->records.begin(),
+                                                child->records.end(),
+                                                DurationT(0)).count()
+                         ) / child->records.size() / avg.count();
+    }
+  }
 };
 
 struct RecordTree;
@@ -183,6 +195,8 @@ class MermaidPlotter {
               TimerManager::stddev(records)).count()*1e-3 << ", ";
 
     // if output portion
+    node->calcAvgProportion();
+    ss << "Avg proportion: " << node->proportion * 100.0 << "\%";
 
     return ss.str();
   }
