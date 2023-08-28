@@ -14,11 +14,13 @@ using RecordTreeNodePtr = std::shared_ptr<RecordTreeNode>;
 
 struct RecordTreeNode {
   const std::string name;
-  std::vector<Timer> records;
+  // std::vector<Timer> records;
+  std::vector<DurationT> records;
   std::vector<RecordTreeNodePtr> children;
 
-  RecordTreeNode(const TimerPtr timer) : name(timer->name)
-  { records.push_back(*timer); }
+  RecordTreeNode(const TimerPtr timer) : name(timer->name){
+    records.push_back(timer->duration);
+  }
 
   RecordTreeNode(const std::string& name) : name(name) {}
 };
@@ -60,7 +62,7 @@ class MermaidPlotter {
       for(const auto& timer : record.timers) {
         RecordTreeNodePtr node = getTreeNode(
             boost::filesystem::path(timer->path).begin(), found->root, false);
-        node->records.push_back(*timer);
+        node->records.push_back(timer->duration);
       }
     }
     std::cout << "Generated " << trees_.size() << " trees"
@@ -145,19 +147,40 @@ class MermaidPlotter {
    * @return
    */
   std::string stringNodeInfo(const RecordTreeNodePtr node, int flag=0xf){
+    const auto& records = node->records;
     std::stringstream ss;
     ss << node->name;
 
+    ss.precision(3);
+
     // if output count
-    ss << '(' << node->records.size() << ')';
+    ss << '(' << node->records.size() << ')' << CHLINE;
 
     // if output min
+    ss << "Min: "
+        << std::chrono::duration_cast<std::chrono::microseconds>(
+              *std::min_element(records.begin(), records.end())
+            ).count()*1e-3
+        << ", ";
 
     // if output max
+    ss << "Max: "
+        << std::chrono::duration_cast<std::chrono::microseconds>(
+              *std::max_element(records.begin(), records.end())
+            ).count()*1e-3
+        << ", ";
 
     // if output avg
+    ss << "Avg: "
+        << std::chrono::duration_cast<std::chrono::microseconds>(
+              std::accumulate(records.begin(), records.end(), DurationT(0))
+            ).count()*1e-3 / records.size()
+        << ", ";
 
     // if output stddev
+    ss << "Stddev: "
+        << std::chrono::duration_cast<std::chrono::microseconds>(
+              TimerManager::stddev(records)).count()*1e-3 << ", ";
 
     // if output portion
 
