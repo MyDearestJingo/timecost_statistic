@@ -13,6 +13,7 @@
 #include <cmath>
 #include <stack>
 #include <memory>
+#include <numeric>
 
 // using namespace std::chrono_literals;
 // using namespace std::chrono;
@@ -221,76 +222,37 @@ class TimerManager{
       }
     }
 
-    auto min = [](const std::vector<DurationT>& records)->DurationT{
-      DurationT min_duration = DurationT::max();
-      for(const auto& record : records) {
-        if(record < min_duration) min_duration = record;
-      }
-      return min_duration;
-    };
-
-    auto max = [](const std::vector<DurationT>& records)->DurationT{
-      DurationT max_duration = DurationT::min();
-      for(const auto& record : records) {
-        if(record > max_duration) max_duration = record;
-      }
-      return max_duration;
-    };
-
-    auto sum = [](const std::vector<DurationT>& records)->DurationT{
-      DurationT total(0);
-      for(const auto& record : records) {
-        total += record;
-      }
-      return total;
-    };
-
-    auto avg = [&](const std::vector<DurationT>& records)->DurationT{
-      if(records.size() < 1) {
-        return DurationT(0);
-      }
-      return sum(records)/records.size();
-    };
-
-    auto stddev = [&](const std::vector<DurationT>& records)->DurationT{
-      if(records.size() < 1) return DurationT(0);
-
-      DurationT avg_val = avg(records);
-      double var=0.0;
-      for(const auto& record : records) {
-        var += std::pow((avg_val-record).count(), 2);
-      }
-      var /= records.size();
-      double stddev_val = std::sqrt(var);
-
-      return DurationT(int64_t(stddev_val));
-    };
-
     out << "Statistics:\n";
 
     for(const auto& timer : timers) {
-      out << "  [" << timer.first << "(count: " << timer.second.size() <<")] | ";
+      const auto &durations = timer.second;
+      out << "  [" << timer.first << "(count: " << durations.size() <<")] | ";
 
       // min
       out << "Min: "
           << std::chrono::duration_cast<std::chrono::microseconds>(
-                  min(timer.second)).count()*1e-3 << "ms | ";
+               *std::min_element(durations.begin(), durations.end())
+             ).count()*1e-3
+          << "ms | ";
 
       // max
       out << "Max: "
           << std::chrono::duration_cast<std::chrono::microseconds>(
-                  max(timer.second)).count()*1e-3 << "ms | ";
+               *std::max_element(durations.begin(), durations.end())
+             ).count()*1e-3
+          << "ms | ";
 
       // average
       out << "Avg: "
           << std::chrono::duration_cast<std::chrono::microseconds>(
-                  avg(timer.second)).count()*1e-3 << "ms | ";
+               std::accumulate(durations.begin(), durations.end(), DurationT(0))
+             ).count()*1e-3 / durations.size()
+          << "ms | ";
 
       // stddev
       out << "Stddev: "
           << std::chrono::duration_cast<std::chrono::microseconds>(
-                  stddev(timer.second)).count()*1e-3 << "ms | ";
-
+                  stddev(durations)).count()*1e-3 << "ms | ";
 
       out << std::endl;
     }
@@ -319,6 +281,40 @@ class TimerManager{
     log_info_ << "Exported " << count << " records" << std::endl;
     return true;
   }
+
+  /**
+   * @brief Calculate stddev of duration records
+   * @param records
+   * @return stddev
+   */
+  static DurationT stddev(const std::vector<DurationT>& records){
+    auto sum = [](const std::vector<DurationT>& records)->DurationT{
+      DurationT total(0);
+      for(const auto& record : records) {
+        total += record;
+      }
+      return total;
+    };
+
+    auto avg = [&](const std::vector<DurationT>& records)->DurationT{
+      if(records.size() < 1) {
+        return DurationT(0);
+      }
+      return sum(records)/records.size();
+    };
+
+    if(records.size() < 1) return DurationT(0);
+
+    DurationT avg_val = avg(records);
+    double var=0.0;
+    for(const auto& record : records) {
+      var += std::pow((avg_val-record).count(), 2);
+    }
+    var /= records.size();
+    double stddev_val = std::sqrt(var);
+
+    return DurationT(int64_t(stddev_val));
+  };
 
  private:
   std::mutex mtx_;
