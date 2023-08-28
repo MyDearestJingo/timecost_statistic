@@ -32,6 +32,12 @@ struct RecordTree {
 };
 
 class MermaidPlotter {
+  const std::string ROOT_ENC_H = "((\"`";   // root node enclosure head
+  const std::string ROOT_ENC_T = "`\"))";   // root node enclosure tail
+  const std::string NODE_ENC_H = "[\"`";    // normal node enclosure head
+  const std::string NODE_ENC_T = "`\"]";    // normal node enclosure head
+  const std::string CHLINE = "<br/>";       // line-change symbol in mermaid
+
  public:
   void init(const std::vector<Record>& records) {
     std::cout << "Init from " << records.size() << " records" << std::endl;
@@ -119,11 +125,11 @@ class MermaidPlotter {
     // pre-order traversal
     if(level < 1){
       out << getIndention(level+1)
-          << "root((\"`" << stringNodeInfo(root) << "`\"))"
+          << ROOT_ENC_H << stringNodeInfo(root) << ROOT_ENC_T
           << std::endl;
     } else {
       out << getIndention(level+1)
-          << "[\"`" << stringNodeInfo(root) << "`\"] "<< std::endl;
+          << NODE_ENC_H << stringNodeInfo(root) << NODE_ENC_T << std::endl;
     }
     for(const auto& child : root->children) {
       exportTree(out, child, level+1);
