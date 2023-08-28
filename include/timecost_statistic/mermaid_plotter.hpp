@@ -161,7 +161,7 @@ class MermaidPlotter {
   std::string stringNodeInfo(const RecordTreeNodePtr node, int flag=0xf){
     const auto& records = node->records;
     std::stringstream ss;
-    ss << node->name;
+    ss << "**" << node->name << "**";
 
     ss.precision(3);
 
