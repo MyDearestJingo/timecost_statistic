@@ -15,8 +15,7 @@ inline std::vector<std::string> split_str(const std::string& s, const char delim
   size_t start;
   size_t end = 0;
   std::vector<std::string> ret;
-  while ((start = s.find_first_not_of(delimiter, end)) != std::string::npos)
-  {
+  while ((start = s.find_first_not_of(delimiter, end)) != std::string::npos) {
     end = s.find(delimiter, start);
     ret.push_back(s.substr(start, end - start));
   }
@@ -33,5 +32,19 @@ class YamlExporter {
 };
 
 } // namespace timecost_statistic
+
+#ifdef DISABLE_TIMECOST_STATISTIC
+
+#define TS_EXPORT_TO_YAML(filepath)
+
+#else
+
+#define TS_EXPORT_TO_YAML(filepath) \
+  do { \
+    timecost_statistic::YamlExporter exporter; \
+    exporter.dump(timecost_statistic::TimerManager::getInstance().getRecords(), filepath); \
+  } while (0);
+
+#endif
 
 #endif

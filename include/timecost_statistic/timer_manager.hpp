@@ -95,7 +95,7 @@ class TimerManager{
       std::string name,
       const TimePointT* beginning=nullptr)
   {
-    std::replace(name.begin(), name.end(), '/', '_');
+    replace_str(name, "/", "_");
     if(inactive_timers_.find(name) != inactive_timers_.end()) {
       return false;
     }
@@ -352,8 +352,6 @@ class TimerManager{
         std::string(__FUNCTION__) + "_" + \
         std::to_string(__LINE__); \
       timer_name = timer_name.substr(timer_name.find_last_of("/") + 1); \
-    } else { \
-      timecost_statistic::replace_str(timer_name, "/", "_"); \
     } \
     timecost_statistic::TimerManager::getInstance().startTimer(timer_name); \
   } while (0);

@@ -22,7 +22,7 @@ void YamlExporter::dump(const std::vector<Record>& data, const std::string& path
       v_node.back()["time"] = std::to_string((timer->duration.count() * 1e-3)) + "ms";
     }
   }
-  save_yaml("test.yaml", n);
+  save_yaml(path, n);
 }
 
 bool YamlExporter::load_yaml(const std::string& f, YAML::Node& n) {

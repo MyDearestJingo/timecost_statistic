@@ -5,12 +5,11 @@
 // #define DISABLE_TIMECOST_STATISTIC
 #include "timecost_statistic/timer_manager.hpp"
 #include "timecost_statistic/mermaid_plotter.hpp"
+#include "timecost_statistic/yaml_exporter.hpp"
+
 using namespace timecost_statistic;
 using namespace std::chrono_literals;
 
-#include "timecost_statistic/yaml_exporter.hpp"
-
-#include "timecost_statistic/yaml_exporter.hpp"
 
 void foo1(){
   std::cout << "foo1 running" << std::endl;
@@ -21,8 +20,6 @@ void foo1(){
 void foo2(){
   std::cout << "foo2 running" << std::endl;
   sleep(0);
-
-
   // sleep(0.2222);
 }
 
@@ -64,7 +61,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  TS_EXPORT_TO_TXT("/home/ylan3982/agioe/ros2_ws/src/timecost_statistic/test/temp/records.txt");
+  TS_EXPORT_TO_TXT("records.txt");
 
   timecost_statistic::YamlExporter exporter;
   exporter.dump(timecost_statistic::TimerManager::getInstance().getRecords(), "");
