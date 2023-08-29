@@ -4,6 +4,9 @@
 #include <set>
 #include <string>
 #include <boost/filesystem.hpp>
+#include <ctime>
+#include <iomanip>
+
 #include "timecost_statistic/timer_manager.hpp"
 
 namespace timecost_statistic
@@ -110,6 +113,10 @@ class MermaidPlotter {
   }
 
   bool exportMermaidFile(std::ofstream& mermaid_file) {
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    mermaid_file << "Export date: " << std::put_time(&tm, "%d-%m-%Y %H-%M-%S")
+                 << std::endl;
     for(const auto& tree : trees_){
       mermaid_file << "```mermaid\nmindmap" << std::endl;
       exportTree(mermaid_file, tree->root, 0);
