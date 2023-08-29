@@ -206,7 +206,7 @@ class MermaidPlotter {
 
     // if output portion
     node->calcAvgProportion();
-    ss << "Avg proportion: " << node->proportion * 100.0 << "\%";
+    ss << "Avg proportion: " << node->proportion * 100.0 << "%";
 
     return ss.str();
   }
