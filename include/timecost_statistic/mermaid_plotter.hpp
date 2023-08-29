@@ -46,8 +46,8 @@ struct RecordTree {
 };
 
 class MermaidPlotter {
-  const std::string ROOT_ENC_H = "((\"`";   // root node enclosure head
-  const std::string ROOT_ENC_T = "`\"))";   // root node enclosure tail
+  const std::string ROOT_ENC_H = "(\"`";   // root node enclosure head
+  const std::string ROOT_ENC_T = "`\")";   // root node enclosure tail
   const std::string NODE_ENC_H = "[\"`";    // normal node enclosure head
   const std::string NODE_ENC_T = "`\"]";    // normal node enclosure head
   const std::string CHLINE = "<br/>";       // line-change symbol in mermaid
